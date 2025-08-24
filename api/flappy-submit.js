@@ -14,7 +14,7 @@ function getRedis() {
   return client;
 }
 
-const NS = process.env.LAMU_FLAPY_NS || 'lamu:flapy';
+const NS = process.env.LAMU_FLAPY_NS || 'sentient:flapy';
 const BOARD_KEY = `${NS}:board`;                // ZSET
 const DETAIL_KEY = (h) => `${NS}:detail:${h}`;  // HASH
 
