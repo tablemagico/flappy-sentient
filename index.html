@@ -686,15 +686,30 @@
         }
       }
 
-      // collisions: ground or pipes
-      const gY = H - GROUND_H * d;
-      if (b.y + b.r * d >= gY) { b.y = gY - b.r * d; return gameOver(); }
-      for (const p of state.pipes) {
-        if (circleRectCollide(b.x, b.y, b.r * d, p.top.x, p.top.y, p.top.w, p.top.h) ||
-          circleRectCollide(b.x, b.y, b.r * d, p.bottom.x, p.bottom.y, p.bottom.w, p.bottom.h)) {
-          return gameOver();
-        }
-      }
+      // collisions: ceiling, ground, or pipes
+
+// 1) CEILING: tavana değerse game over
+const ceilingY = 0;
+if (b.y - b.r * d <= ceilingY) {
+  b.y = b.r * d;     // sınırın içine geri it
+  return gameOver();
+}
+
+// 2) GROUND: zemine değerse game over
+const gY = H - GROUND_H * d;
+if (b.y + b.r * d >= gY) {
+  b.y = gY - b.r * d;
+  return gameOver();
+}
+
+// 3) PIPES: borulara çarpınca game over
+for (const p of state.pipes) {
+  if (circleRectCollide(b.x, b.y, b.r * d, p.top.x, p.top.y, p.top.w, p.top.h) ||
+      circleRectCollide(b.x, b.y, b.r * d, p.bottom.x, p.bottom.y, p.bottom.w, p.bottom.h)) {
+    return gameOver();
+  }
+}
+
 
       document.getElementById('score').textContent = state.score;
     }
