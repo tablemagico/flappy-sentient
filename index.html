@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flapy Lamumu – Cowppy Bird</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            /* Lamumu palette */
+            --lamu-blue: #2D6BFF;
+            --lamu-red: #FF3B59;
+            --lamu-pink: #FF66CC;
+
+            /* mapped names */
+            --amber: var(--lamu-blue);
+            --teal: var(--lamu-pink);
+
+            --ink: #0A0B0D;
+            --panel: #11161b;
+            --muted: #c9d3de;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            margin: 0;
+            font-family: Montserrat, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+            color: #EDEFF2;
+            background: #0b0e12;
+            min-height: 100dvh
+        }
+
+        /* Brighter background with your tones */
+        body {
+            background:
+                radial-gradient(1000px 700px at 18% 8%, rgba(45, 107, 255, .45), transparent 70%),
+                radial-gradient(900px 620px at 82% 12%, rgba(255, 59, 89, .38), transparent 70%),
+                radial-gradient(1100px 800px at 50% 92%, rgba(255, 102, 204, .40), transparent 70%),
+                linear-gradient(180deg, #0b0e12 0%, #0a0d11 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: .22;
+            background-image:
+                radial-gradient(rgba(45, 107, 255, .20) 1px, transparent 1.2px),
+                radial-gradient(rgba(255, 102, 204, .18) 1px, transparent 1.2px);
+            background-size: 28px 28px, 34px 34px;
+            background-position: 0 0, 14px 18px;
+        }
+
+        /* ===== Layout: centered game, leaderboard at right ===== */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr minmax(260px, 340px);
+            gap: 18px;
+            max-width: 1200px;
+            margin: 18px auto;
+            padding: 0 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gameCol {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .gameCol {
+                justify-content: center;
+            }
+        }
+
+        /* Top-left (but closer to game) profile box */
+        #userBox {
+            position: fixed;
+            left: var(--user-left, 24px);
+            top: 14px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(17, 22, 27, .85);
+            backdrop-filter: blur(6px);
+            padding: 8px 12px;
+            border-radius: 14px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+            border: 1px solid rgba(45, 107, 255, .45);
+            font-size: 15px;
+        }
+
+        #userBox img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 102, 204, .6)
+        }
+
+        #userBox .hdl {
+            font-weight: 800
+        }
+
+        /* HUD: score top-center above the game */
+        #hud {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 10px;
+            display: flex;
+            justify-content: center;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        #scoreBox {
+            pointer-events: auto;
+            background: rgba(17, 22, 27, .85);
+            padding: 10px 14px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+            font-weight: 800;
+            border: 1px solid rgba(45, 107, 255, .35)
+        }
+
+        /* Game area */
+        #gameWrap {
+            position: relative
+        }
+
+        /* Canvas: min of 560px, 96vw, and 88vh*(9/16) */
+        #game {
+            width: min(560px, 96vw, calc(88vh * 9/16));
+            aspect-ratio: 9/16;
+            background: #071019;
+            border-radius: 20px;
+            box-shadow: 0 14px 46px rgba(0, 0, 0, .45);
+            border: 1px solid #20314a
+        }
+
+        .tapHint {
+            position: absolute;
+            inset: auto 0 12px 0;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            font-size: 12px;
+            opacity: .65
+        }
+
+        /* Leaderboard */
+        #leaderboard {
+            background: radial-gradient(70% 90% at 30% 20%, #13181c, #0a0b0d);
+            border: 2px solid var(--amber);
+            box-shadow: 0 0 16px rgba(45, 107, 255, .35), 0 0 24px rgba(255, 102, 204, .25) inset;
+            border-radius: 16px;
+            padding: 12px;
+            max-height: 70vh;
+            overflow: auto
+        }
+
+        #lb-title {
+            font-weight: 800;
+            color: var(--amber);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px
+        }
+
+        #lb-meta {
+            font-size: .85rem;
+            opacity: .85
+        }
+
+        #lb-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .lb-item {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            background: rgba(255, 255, 255, .04);
+            padding: 6px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(45, 107, 255, .18)
+        }
+
+        .lb-rank {
+            width: 2.2rem;
+            text-align: right;
+            font-weight: 800;
+            color: var(--amber)
+        }
+
+        .lb-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(45, 107, 255, .6)
+        }
+
+        .lb-handle {
+            font-weight: 700
+        }
+
+        .lb-stats {
+            margin-left: auto;
+            opacity: .9;
+            font-size: .95rem
+        }
+
+        #lb-loading {
+            text-align: center;
+            padding: .5rem 0;
+            opacity: .7;
+            display: none
+        }
+
+        @media (max-width: 980px) {
+            #leaderboard {
+                max-height: 32vh;
+            }
+        }
+
+        #socialTag {
+            position: fixed;
+            right: 12px;
+            bottom: 12px;
+            font-size: 12px;
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid #2a3550;
+            padding: 6px 8px;
+            border-radius: 10px;
+            color: #c9d3de;
+            z-index: 200;
+            /* overlays üzerinde kalsın */
+        }
+
+        #socialTag a {
+            color: #4da3ff;
+            text-decoration: none;
+        }
+
+        #socialTag a:hover {
+            text-decoration: underline;
+        }
+
+        #socialTag .sep {
+            margin: 0 6px;
+            opacity: .5;
+        }
+
+        /* Countdown overlay (only over the game area) */
+        #countdown {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            background: rgba(0, 0, 0, .25);
+            z-index: 55;
+        }
+
+        #cdNum {
+            font-size: clamp(48px, 8vw, 120px);
+            font-weight: 900;
+            color: #EDEFF2;
+            text-shadow: 0 6px 30px rgba(0, 0, 0, .45);
+        }
+
+        /* Overlays */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            z-index: 50
+        }
+
+        .card {
+            width: min(520px, 92vw);
+            background: #11161b;
+            border: 1px solid #222b3a;
+            padding: 18px;
+            border-radius: 18px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .45)
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 8px;
+            color: var(--amber)
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .row>* {
+            flex: 1
+        }
+
+        input[type=text] {
+            width: 100%;
+            background: #0f1420;
+            color: #fff;
+            border: 1px solid rgba(45, 107, 255, .45);
+            padding: 12px 14px;
+            border-radius: 12px;
+            outline: none
+        }
+
+        button {
+            cursor: pointer;
+            background: linear-gradient(90deg, var(--amber), var(--teal));
+            color: #fff;
+            border: 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 800
+        }
+
+        button.secondary {
+            background: #223049
+        }
+
+        button.ghost {
+            background: transparent;
+            border: 1px solid #2a3550
+        }
+
+        /* Game Over overlay: BLUR everything except the leaderboard (only covers game column) */
+        #gameover {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(7px);
+            background: rgba(0, 0, 0, .25);
+            z-index: 60
+        }
+
+        #gameover .card {
+            width: min(560px, 92vw)
+        }
+
+        .sharePreview {
+            width: 100%;
+            background: #0f1420;
+            border: 1px dashed #2a3550;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sharePreview img {
+            width: 100%;
+            height: auto;
+            max-height: 220px;
+            object-fit: contain;
+            display: block
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top-left (but aligned closer to the game by JS) -->
+    <div id="userBox" title="X profile">
+        <img id="avatar" alt="pfp" src="" />
+        <div class="hdl" id="handle">@guest</div>
+    </div>
+
+    <div class="layout">
+        <!-- CENTER: Game -->
+        <div class="gameCol">
+            <div id="gameWrap">
+                <div id="hud">
+                    <div id="scoreBox">Score: <span id="score">0</span></div>
+                </div>
+                <canvas id="game"></canvas>
+                <div id="countdown" aria-hidden="true">
+                    <div id="cdNum">3</div>
+                </div>
+                <div class="tapHint">Tap / Space to FLAP</div>
+
+                <!-- Game Over: local overlay (blurs only the game column) -->
+                <div id="gameover" role="dialog" aria-modal="true">
+                    <div class="card grid">
+                        <h2 class="title" style="margin-bottom:4px">Game Over</h2>
+                        <div class="muted" id="finalTxt">Your score: 0</div>
+                        <!-- Score Card preview (like Race) -->
+                        <div class="sharePreview">
+                            <img id="shareImg" alt="share card" />
+                        </div>
+                        <div class="row">
+                            <button id="btnAgain">Play Again</button>
+                            <a id="dlBtn" download="flapy-score.png"><button class="ghost" style="width:100%">Download
+                                    Card</button></a>
+                        </div>
+                        <div class="row">
+                            <button id="tweetBtn" class="secondary">Share on X</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- /gameover -->
+            </div>
+        </div>
+
+        <!-- RIGHT: Leaderboard -->
+        <aside id="leaderboard">
+            <div id="lb-title"><span>🏆 Leaderboard</span><span id="lb-meta"></span></div>
+            <ol id="lb-list"></ol>
+            <div id="lb-loading">Loading…</div>
+        </aside>
+    </div>
+
+    <!-- Start (full-screen) -->
+    <div id="start" class="overlay" role="dialog" aria-modal="true">
+        <div class="card">
+            <h1 class="title">Flapy Lamumu 🐄</h1>
+            <p class="muted">Enter your X (Twitter) handle to start. We’ll fetch your avatar.</p>
+            <div class="row">
+                <input id="inputHandle" type="text" placeholder="e.g., lamumu_io" autocomplete="off" />
+            </div>
+            <div class="row">
+                <button id="btnStart">Play</button>
+                <button id="btnNoX" class="secondary">Play without X</button>
+            </div>
+            <p class="muted" style="font-size:12px; margin-top:10px">Controls: Space / Tap to flap. Avoid pipes and the
+                ground.</p>
+        </div>
+    </div>
+
+    <script>
+        /* ================= SETTINGS ================= */
+        const COW_IMG_SRC = 'assets/cow_fly.png'; // <- put your cow image path here
+        const API_BASE = '';                      // same origin
+        const API_SUBMIT = '/api/flapy-submit';
+        const API_LEADER = '/api/flapy-leaderboard';
+
+        const GRAVITY = 1600;     // px/s^2
+        const FLAP_VY = -460;     // flap velocity (px/s)
+        const SCROLL = 160;       // world scroll speed (px/s)
+
+        /* Increased vertical gap between pipes */
+        const PIPE_GAP = 180;     // was 180 → now 240 (easier spacing)
+        const PIPE_W = 72;        // pipe width (px)
+        const PIPE_SPAWN_MS = 1400;
+        const GROUND_H = 84;      // ground height (px)
+        const MAX_ROT = 0.6;      // rad
+        const DPR_MAX = 2;
+
+        /* ================ STATE ================ */
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        let state = {
+            dpr: Math.max(1, Math.min(DPR_MAX, window.devicePixelRatio || 1)),
+            running: false, started: false, over: false,
+            handle: '@guest', avatarImg: null, startMs: 0, runMs: 0,
+            W: 0, H: 0,
+            bird: { x: 0, y: 0, r: 18, vy: 0, rot: 0 },
+            pipes: [], lastSpawn: 0, score: 0
+        };
+
+        function placeUserBox() {
+            // Move the profile box closer to the game (aligned to game left)
+            const gw = document.getElementById('gameWrap');
+            const rect = gw.getBoundingClientRect();
+            const leftPx = Math.max(14, rect.left + 8);
+            document.documentElement.style.setProperty('--user-left', leftPx + 'px');
+        }
+
+        function resize() {
+            const wCss = Math.min(560, window.innerWidth * 0.96, window.innerHeight * 0.88 * (9 / 16));
+            const hCss = Math.floor(wCss * 16 / 9);
+            const d = state.dpr;
+            canvas.style.width = Math.floor(wCss) + 'px';
+            canvas.style.height = Math.floor(hCss) + 'px';
+            canvas.width = Math.floor(wCss * d);
+            canvas.height = Math.floor(hCss * d);
+            state.W = canvas.width; state.H = canvas.height;
+            // bird position
+            state.bird.x = Math.floor(state.W * 0.35);
+            if (!state.started) state.bird.y = Math.floor(state.H * 0.45);
+            placeUserBox();
+        }
+        window.addEventListener('resize', () => { resize(); });
+
+        /* ================ IMAGES ================ */
+        const images = { cow: null };
+        if (COW_IMG_SRC) {
+            images.cow = new Image();
+            images.cow.crossOrigin = 'anonymous';
+            images.cow.src = COW_IMG_SRC;
+            images.cow.onerror = () => images.cow = null;
+        }
+
+        /* ================ HELPERS ================ */
+        function rnd(a, b) { return a + Math.random() * (b - a); }
+        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+        function bumpScore() {
+            document.getElementById('scoreBox').animate(
+                [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }],
+                { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' }
+            );
+        }
+        function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) {
+            const dx = Math.abs(cx - (rx + rw / 2));
+            const dy = Math.abs(cy - (ry + rh / 2));
+            if (dx > (rw / 2 + cr)) return false;
+            if (dy > (rh / 2 + cr)) return false;
+            if (dx <= rw / 2 || dy <= rh / 2) return true;
+            const cornerDistSq = (dx - rw / 2) ** 2 + (dy - rh / 2) ** 2;
+            return cornerDistSq <= cr * cr;
+        }
+
+        /* ================ GAME LOOP ================ */
+        let lastTime = 0;
+        function loop(t) {
+            if (!state.running) return;
+            const dt = lastTime ? (t - lastTime) / 1000 : 1 / 60;
+            lastTime = t;
+            update(dt);
+            render();
+            requestAnimationFrame(loop);
+        }
+
+        function startGame() {
+            // full reset
+            lastTime = 0;
+            state.over = false;
+            state.running = true;
+
+            // bird safe spawn (merkez civarı)
+            state.bird.x = Math.floor(state.W * 0.35);
+            state.bird.y = Math.floor(state.H * 0.45);
+            state.bird.vy = 0;
+            state.bird.rot = 0;
+
+            // world
+            state.pipes.length = 0;
+            state.lastSpawn = 0;
+            state.score = 0;
+
+            // run meta
+            state.startMs = Date.now();
+            state.started = true;
+
+            hide(document.getElementById('start'));
+            hide(document.getElementById('gameover'));
+            requestAnimationFrame(loop);
+        }
+
+
+        async function gameOver() {
+            if (state.over) return;
+            state.over = true;
+            state.running = false;
+            state.runMs = Math.max(0, Date.now() - state.startMs);
+
+            // Score text + share card
+            document.getElementById('finalTxt').textContent = `Your score: ${state.score}`;
+            const cardUrl = makeShareCard({ score: state.score, handle: state.handle, avatarImg: state.avatarImg });
+            document.getElementById('shareImg').src = cardUrl;
+            document.getElementById('dlBtn').setAttribute('href', cardUrl);
+
+            show(document.getElementById('gameover')); // local overlay over game only
+
+            // submit + refresh leaderboard (non-blocking UI)
+            try {
+                await submitScore(state.handle.replace('@', ''), state.score, state.runMs);
+                await resetAndLoadLeaderboard(state.handle.replace('@', ''));
+            } catch (e) { console.warn('submit error', e); }
+        }
+
+        function update(dt) {
+            const d = state.dpr, W = state.W, H = state.H;
+            // spawn pipes
+            state.lastSpawn += dt * 1000;
+            if (state.lastSpawn >= PIPE_SPAWN_MS) {
+                state.lastSpawn = 0;
+                const gap = PIPE_GAP * d;
+                const topMin = 60 * d, bottomMin = (GROUND_H + 60) * d;
+                const mid = rnd(topMin + 40 * d, H - bottomMin - gap - 40 * d);
+                const topH = mid;
+                const botY = mid + gap;
+                state.pipes.push({
+                    x: W + 40 * d,
+                    w: PIPE_W * d,
+                    top: { x: 0, y: 0, w: 0, h: topH },
+                    bottom: { x: 0, y: botY, w: 0, h: H - botY - GROUND_H * d },
+                    passed: false
+                });
+            }
+            // scroll pipes
+            const vx = SCROLL * d * dt;
+            for (const p of state.pipes) {
+                p.x -= vx;
+                p.top.x = p.x; p.top.w = PIPE_W * d;
+                p.bottom.x = p.x; p.bottom.w = PIPE_W * d;
+            }
+            state.pipes = state.pipes.filter(p => p.x + PIPE_W * d > -20 * d);
+
+            // bird physics
+            const b = state.bird;
+            b.vy += GRAVITY * d * dt;
+            b.y += b.vy * dt;
+            b.rot = clamp((b.vy / 600), -MAX_ROT, MAX_ROT);
+
+            // score when passed pipe
+            for (const p of state.pipes) {
+                if (!p.passed && p.x + p.top.w < b.x) {
+                    p.passed = true; state.score += 1; bumpScore();
+                }
+            }
+
+            // collisions: ground or pipes
+            const gY = H - GROUND_H * d;
+            if (b.y + b.r * d >= gY) { b.y = gY - b.r * d; return gameOver(); }
+            for (const p of state.pipes) {
+                if (circleRectCollide(b.x, b.y, b.r * d, p.top.x, p.top.y, p.top.w, p.top.h) ||
+                    circleRectCollide(b.x, b.y, b.r * d, p.bottom.x, p.bottom.y, p.bottom.w, p.bottom.h)) {
+                    return gameOver();
+                }
+            }
+
+            document.getElementById('score').textContent = state.score;
+        }
+
+        function render() {
+            const d = state.dpr, W = state.W, H = state.H;
+            ctx.clearRect(0, 0, W, H);
+
+            // bright sky with Lamumu tones
+            const g = ctx.createLinearGradient(0, 0, 0, H);
+            g.addColorStop(0, '#0f2242'); g.addColorStop(1, '#0b1423');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+            // glow
+            const grd1 = ctx.createRadialGradient(W * 0.2, H * 0.15, 20 * d, W * 0.2, H * 0.15, 260 * d);
+            grd1.addColorStop(0, 'rgba(45,107,255,.35)'); grd1.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grd1; ctx.fillRect(0, 0, W, H);
+            const grd2 = ctx.createRadialGradient(W * 0.85, H * 0.22, 20 * d, W * 0.85, H * 0.22, 300 * d);
+            grd2.addColorStop(0, 'rgba(255,59,89,.30)'); grd2.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grd2; ctx.fillRect(0, 0, W, H);
+
+            // pipes
+            for (const p of state.pipes) {
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(p.top.x, 0, p.top.w, p.top.h);
+                ctx.fillStyle = '#16a34a'; ctx.fillRect(p.top.x - 4 * d, p.top.h - 14 * d, p.top.w + 8 * d, 14 * d);
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(p.bottom.x, p.bottom.y, p.bottom.w, p.bottom.h);
+                ctx.fillStyle = '#16a34a'; ctx.fillRect(p.bottom.x - 4 * d, p.bottom.y, p.bottom.w + 8 * d, 14 * d);
+            }
+
+            // ground
+            const gY = H - GROUND_H * d;
+            ctx.fillStyle = '#3b2a1a'; ctx.fillRect(0, gY, W, GROUND_H * d);
+            ctx.fillStyle = '#5d3c22';
+            for (let x = -(Date.now() / 4) % (40 * d); x < W; x += 40 * d) ctx.fillRect(x, gY + 30 * d, 20 * d, 8 * d);
+
+            // bird (cow)
+            const b = state.bird;
+            ctx.save();
+            ctx.translate(b.x, b.y);
+            ctx.rotate(b.rot);
+            const R = b.r * d;
+            if (images.cow && images.cow.complete) {
+                ctx.drawImage(images.cow, -R * 1.1, -R, R * 2.2, R * 2.0);
+            } else {
+                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+                ctx.font = Math.floor(R * 1.2) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🐄', 0, 2 * d);
+            }
+            ctx.restore();
+        }
+
+        /* ================ INPUTS ================ */
+        function flap() {
+            if (!state.started || state.over) return;
+            state.bird.vy = FLAP_VY * state.dpr;
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); flap(); }
+            // Quick restart: Enter or Space on Game Over
+            if (state.over && (e.code === 'Enter' || e.code === 'Space')) {
+                e.preventDefault();
+                startCountdown(startGame);
+            }
+
+
+        });
+        canvas.addEventListener('pointerdown', flap);
+
+        /* ================ START/OVER UI ================ */
+        function show(el) { el.style.display = 'flex'; } function hide(el) { el.style.display = 'none'; }
+        const againBtn = document.getElementById('btnAgain');
+        againBtn.setAttribute('type', 'button'); // form davranışını engelle
+
+        againBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            startCountdown(startGame);
+        });
+        againBtn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            startCountdown(startGame);
+        });
+        const inputHandle = document.getElementById('inputHandle');
+        document.getElementById('btnStart').addEventListener('click', () => beginWithHandle(inputHandle.value.trim()));
+        document.getElementById('btnNoX').addEventListener('click', () => beginWithHandle(''));
+
+        function beginWithHandle(h) {
+            if (h) {
+                state.handle = h.startsWith('@') ? h : '@' + h;
+                document.getElementById('handle').textContent = state.handle;
+                loadAvatarFor(h);
+            } else {
+                state.handle = '@guest';
+                document.getElementById('handle').textContent = state.handle;
+                setAvatar(null);
+            }
+            resetAndLoadLeaderboard(state.handle.replace('@', '')).catch(() => { });
+            // Start overlay'i geri sayım sırasında gizle
+            hide(document.getElementById('start'));
+            // 3-2-1-GO sonra oyunu başlat
+            startCountdown(startGame);
+        }
+
+        /* ======= COUNTDOWN (guard + gameover'ı hemen gizle) ======= */
+        let _cdTimer = null;
+        let _cdActive = false;
+
+        function startCountdown(thenStartGame) {
+            if (_cdActive) return;              // aynı anda iki geri sayım olmasın
+            _cdActive = true;
+
+            clearTimeout(_cdTimer);
+            const cd = document.getElementById('countdown');
+            const num = document.getElementById('cdNum');
+
+            // HEMEN kapat: skor kartı / start overlay
+            hide(document.getElementById('gameover'));
+            hide(document.getElementById('start'));
+
+            // eski kart görseli kalmasın
+            const shareImg = document.getElementById('shareImg');
+            if (shareImg) shareImg.src = '';
+
+            cd.style.display = 'flex';
+
+            const seq = ['3', '2', '1', 'GO!'];
+            let i = 0;
+
+            function step() {
+                num.textContent = seq[i];
+                num.animate(
+                    [{ transform: 'scale(.6)', opacity: .2 }, { transform: 'scale(1)', opacity: 1 }],
+                    { duration: 300, easing: 'cubic-bezier(.2,.7,.2,1)' }
+                );
+                i++;
+                if (i < seq.length) {
+                    _cdTimer = setTimeout(step, 800);
+                } else {
+                    _cdTimer = setTimeout(() => {
+                        cd.style.display = 'none';
+                        _cdActive = false;
+                        if (typeof thenStartGame === 'function') thenStartGame();
+                    }, 600); // "GO!" sonra ufak bekleme
+                }
+            }
+            step();
+        }
+
+
+
+        /* ================ AVATAR (X) ================ */
+        function candidateAvatarUrls(handle) {
+            const h = String(handle).replace(/^@/, '');
+            return [
+                `https://unavatar.io/x/${encodeURIComponent(h)}`,
+                `https://unavatar.io/twitter/${encodeURIComponent(h)}`,
+                `https://unavatar.io/${encodeURIComponent(h)}`,
+                `https://unavatar.io/https://x.com/${encodeURIComponent(h)}`
+            ];
+        }
+        function tryLoad(url) { return new Promise((res, rej) => { const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = () => res(url); img.onerror = rej; img.src = url; setTimeout(() => rej(new Error('timeout')), 6000); }); }
+        async function resolveWorkingAvatar(handle) { for (const u of candidateAvatarUrls(handle)) { try { const ok = await tryLoad(u); return ok; } catch (e) { } } return null; }
+        function setAvatar(src) {
+            const img = document.getElementById('avatar');
+            if (!src) { img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(makeFallbackPfpSvg()); state.avatarImg = null; return; }
+            img.crossOrigin = 'anonymous'; img.src = src;
+            img.onerror = () => { img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(makeFallbackPfpSvg()); state.avatarImg = null; }
+            img.onload = () => { const a = new Image(); a.crossOrigin = 'anonymous'; a.src = src; a.onload = () => state.avatarImg = a; a.onerror = () => state.avatarImg = null; }
+        }
+        async function loadAvatarFor(handle) { const src = await resolveWorkingAvatar(handle); setAvatar(src); }
+        function makeFallbackPfpSvg() {
+            const initials = state.handle && state.handle.length > 1 ? state.handle.replace('@', '').slice(0, 2).toUpperCase() : 'LM';
+            return `<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#2D6BFF'/><stop offset='100%' stop-color='#FF66CC'/></linearGradient></defs><rect width='100%' height='100%' fill='url(#g)'/><text x='50%' y='56%' dominant-baseline='middle' text-anchor='middle' font-family='Montserrat, sans-serif' font-size='32' fill='#eaf2ff' font-weight='800'>${initials}</text></svg>`;
+        }
+
+        /* ================ SCORE CARD (share like Race) ================ */
+        function makeShareCard({ score, handle, avatarImg }) {
+            const W = 960, H = 540; // horizontal card
+            const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+
+            // background with Lamumu tones
+            const bg1 = g.createLinearGradient(0, 0, 0, H);
+            bg1.addColorStop(0, '#0b0e12'); bg1.addColorStop(1, '#0e141a');
+            g.fillStyle = bg1; g.fillRect(0, 0, W, H);
+            g.fillStyle = 'rgba(45,107,255,.25)'; g.beginPath(); g.ellipse(W * 0.18, H * 0.18, 240, 140, 0, 0, Math.PI * 2); g.fill();
+            g.fillStyle = 'rgba(255,59,89,.22)'; g.beginPath(); g.ellipse(W * 0.85, H * 0.25, 280, 160, 0, 0, Math.PI * 2); g.fill();
+
+            // header
+            g.fillStyle = '#EDEFF2'; g.font = '900 64px Montserrat, sans-serif'; g.fillText('FLAPY LAMUMU', 40, 110);
+            g.fillStyle = '#dbe3ea'; g.font = '700 28px Montserrat, sans-serif'; g.fillText('Score', 40, 170);
+            g.fillStyle = '#7bd389'; g.font = '900 96px Montserrat, sans-serif'; g.fillText(String(score), 40, 260);
+
+            // player row
+            const at = handle || '@guest';
+            const AX = 40, AY = 320, AR = 56; g.save(); g.beginPath(); g.arc(AX + AR, AY + AR, AR, 0, Math.PI * 2); g.clip();
+            if (avatarImg) { g.drawImage(avatarImg, AX, AY, AR * 2, AR * 2); } else { g.fillStyle = '#1b2436'; g.fillRect(AX, AY, AR * 2, AR * 2); g.fillStyle = '#eaf2ff'; g.font = '800 42px Montserrat, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText((at.replace('@', '').slice(0, 2) || 'LM').toUpperCase(), AX + AR, AY + AR); g.textAlign = 'start'; g.textBaseline = 'alphabetic'; }
+            g.restore();
+            g.fillStyle = '#EDEFF2'; g.font = '800 42px Montserrat, sans-serif'; g.fillText(at, AX + AR * 2 + 20, AY + AR + 14);
+
+            // border + footer
+            g.strokeStyle = '#2D6BFF'; g.lineWidth = 6; rounded(g, 12, 12, W - 24, H - 24, 16); g.stroke();
+            g.fillStyle = '#9fb3d4'; g.font = '600 26px Montserrat, sans-serif'; g.fillText('lamumu.io', W - 250, H - 28);
+
+            return c.toDataURL('image/png');
+
+            function rounded(gc, x, y, w, h, r) { const rr = Math.min(r, w / 2, h / 2); gc.beginPath(); gc.moveTo(x + rr, y); gc.arcTo(x + w, y, x + w, y + h, rr); gc.arcTo(x + w, y + h, x, y + h, rr); gc.arcTo(x, y + h, x, y, rr); gc.arcTo(x, y, x + w, y, rr); gc.closePath(); }
+        }
+
+        /* ================ API (Leaderboard) ================ */
+        const lb = document.getElementById('lb-list'); const lbMeta = document.getElementById('lb-meta'); const lbLoading = document.getElementById('lb-loading');
+        let lbOffset = 0, lbPage = 50, lbTotal = null, lbBusy = false;
+
+        function apiUrl(p) { return (API_BASE || '') + p; }
+        async function submitScore(handle, score, timeMs) {
+            const r = await fetch(apiUrl(API_SUBMIT), {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ handle, score, timeMs })
+            });
+            if (!r.ok) throw new Error('submit failed');
+            return r.json();
+        }
+        async function fetchLeaderboardPage(start = 0, count = 50, rankFor = null) {
+            const u = new URL(apiUrl(API_LEADER), window.location.href);
+            u.searchParams.set('start', String(start));
+            u.searchParams.set('count', String(count));
+            if (rankFor) u.searchParams.set('rankFor', rankFor);
+            const r = await fetch(u.toString(), { headers: { 'accept': 'application/json' } });
+            if (!r.ok) throw new Error('leaderboard failed');
+            return r.json();
+        }
+        function formatMs(ms) { return (ms / 1000).toFixed(2) + 's'; }
+        function avatarFor(handle) { return `https://unavatar.io/x/${encodeURIComponent(handle)}`; }
+        function renderLeaderboardItems(items, startIndex) {
+            items.forEach((it, idx) => {
+                const rank = startIndex + idx + 1;
+                const li = document.createElement('li'); li.className = 'lb-item';
+                const av = avatarFor(it.handle);
+                li.innerHTML = `<span class="lb-rank">#${rank}</span>
+      <img class="lb-avatar" src="${av}" onerror="this.style.visibility='hidden'"/>
+      <span class="lb-handle">@${it.handle}</span>
+      <span class="lb-stats">${it.score} • ${formatMs(it.timeMs)}</span>`;
+                lb.appendChild(li);
+            });
+        }
+        async function resetAndLoadLeaderboard(rankFor = null) {
+            lb.innerHTML = ''; lbOffset = 0; lbTotal = null;
+            await loadMoreLeaderboard(rankFor);
+        }
+        async function loadMoreLeaderboard(rankFor = null) {
+            if (lbBusy) return; lbBusy = true; lbLoading.style.display = 'block';
+            try {
+                const data = await fetchLeaderboardPage(lbOffset, lbPage, rankFor);
+                if (lbTotal == null) lbTotal = data.total ?? 0;
+                renderLeaderboardItems(data.items || [], lbOffset);
+                lbOffset += (data.items || []).length;
+                lbMeta.textContent = lbTotal ? `${lbOffset}/${lbTotal}` : '';
+            } finally { lbBusy = false; lbLoading.style.display = 'none'; }
+        }
+        document.getElementById('leaderboard').addEventListener('scroll', async (e) => {
+            const el = e.currentTarget;
+            const near = el.scrollTop + el.clientHeight >= el.scrollHeight - 80;
+            if (near && (lbTotal == null || lbOffset < lbTotal)) await loadMoreLeaderboard();
+        });
+
+        /* ================ SHARE (X) ================ */
+        document.getElementById('tweetBtn').addEventListener('click', () => {
+            const text = encodeURIComponent(`I played Flapy Lamumu! Score: ${state.score} ${state.handle}\n#Lamumu #Flapy`);
+            const url = 'https://twitter.com/intent/tweet?text=' + text;
+            window.open(url, '_blank');
+        });
+
+        /* ================ INIT ================ */
+        setAvatar(null); resize(); placeUserBox();
+        show(document.getElementById('start'));
+
+        /* ===== utility to align user box after fonts load, etc. ===== */
+        window.addEventListener('load', placeUserBox);
+    </script>
+
+    <div id="socialTag" aria-label="social handles">
+        discord: <span style="font-weight:700">tablemagicio</span>
+        <span class="sep">•</span>
+        x: <a href="https://x.com/tablemagico" target="_blank" rel="noopener noreferrer">tablemagico</a>
+    </div>
+</body>
+
+</html>
