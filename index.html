@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <title>Flapy Sentient</title>
+  <title>Flappy Sentient</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap" rel="stylesheet" />
@@ -466,7 +466,7 @@
             </div>
             <div class="row">
               <button id="btnAgain">Play Again</button>
-              <a id="dlBtn" download="flapy-score.png"><button class="ghost" style="width:100%">Download
+              <a id="dlBtn" download="flappy-score.png"><button class="ghost" style="width:100%">Download
                   Card</button></a>
             </div>
             <div class="row">
@@ -489,7 +489,7 @@
   <!-- Start (full-screen) -->
   <div id="start" class="overlay" role="dialog" aria-modal="true">
     <div class="card">
-      <h1 class="title">Flapy Dobby</h1>
+      <h1 class="title">Flappy Dobby</h1>
       <p class="muted">Enter your X (Twitter) handle to start. We’ll fetch your avatar.</p>
       <div class="row">
         <input id="inputHandle" type="text" placeholder="e.g., sentient_io" autocomplete="off" />
@@ -507,8 +507,8 @@
     /* ================= SETTINGS ================= */
     const COW_IMG_SRC = 'assets/cow_fly.png'; // <- put your cow image path here
     const API_BASE = '';                      // same origin
-    const API_SUBMIT = '/api/flapy-submit';
-    const API_LEADER = '/api/flapy-leaderboard';
+    const API_SUBMIT = '/api/flappy-submit';
+    const API_LEADER = '/api/flappy-leaderboard';
 
     const GRAVITY = 1600;     // px/s^2
     const FLAP_VY = -460;     // flap velocity (px/s)
@@ -898,7 +898,7 @@ for (const p of state.pipes) {
       g.fillStyle = 'rgba(255,59,89,.22)'; g.beginPath(); g.ellipse(W * 0.85, H * 0.25, 280, 160, 0, 0, Math.PI * 2); g.fill();
 
       // header
-      g.fillStyle = '#EDEFF2'; g.font = '900 64px Montserrat, sans-serif'; g.fillText('FLAPY DOBBY', 40, 110);
+      g.fillStyle = '#EDEFF2'; g.font = '900 64px Montserrat, sans-serif'; g.fillText('FLAPPY DOBBY', 40, 110);
       g.fillStyle = '#dbe3ea'; g.font = '700 28px Montserrat, sans-serif'; g.fillText('Score', 40, 170);
       g.fillStyle = '#7bd389'; g.font = '900 96px Montserrat, sans-serif'; g.fillText(String(score), 40, 260);
 
@@ -977,7 +977,7 @@ for (const p of state.pipes) {
 
     /* ================ SHARE (X) ================ */
     document.getElementById('tweetBtn').addEventListener('click', () => {
-      const text = encodeURIComponent(`I played Flapy Dobby! Score: ${state.score} ${state.handle}\n#Sentient #FlapyDobby`);
+      const text = encodeURIComponent(`I played Flappy Dobby! Score: ${state.score} ${state.handle}\n#Sentient #FlappyDobby`);
       const url = 'https://twitter.com/intent/tweet?text=' + text;
       window.open(url, '_blank');
     });
