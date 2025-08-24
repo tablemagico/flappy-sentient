@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
     <title>Flapy Sentient </title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -399,6 +399,29 @@
             object-fit: contain;
             display: block
         }
+
+        /* === MOBILE: Oyun alanında kayma/zoom kapat === */
+html, body { 
+  overflow-x: hidden;           /* yatay kayma yok */
+  overscroll-behavior-x: none;  /* iOS/Android yatay overscroll'u kapat */
+}
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Sadece oyun tarafında pan/zoom jestlerini kapat */
+#gameWrap, #game, canvas {
+  touch-action: none;           /* pan/zoom kapalı */
+}
+
+/* Leaderboard dikey scroll yapabilsin */
+#leaderboard {
+  touch-action: pan-y;
+}
+
+/* Buton/link/input: çift dokun-zoom devre dışı, sadece "tıklama" */
+button, a, input {
+  touch-action: manipulation;
+}
+
     </style>
 </head>
 
@@ -941,6 +964,38 @@
         /* ===== utility to align user box after fonts load, etc. ===== */
         window.addEventListener('load', placeUserBox);
     </script>
+    /* === MOBILE GUARD: Oyun alanında pinch/double-tap zoom'u kapat === */
+const _gw = document.getElementById('gameWrap');
+
+/* iOS pinch (gesturestart) – sadece oyun alanında engelle */
+document.addEventListener('gesturestart', (e) => {
+  if (_gw && _gw.contains(e.target)) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+/* Double-tap zoom – sadece oyun alanında engelle */
+document.addEventListener('dblclick', (e) => {
+  if (_gw && _gw.contains(e.target)) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+/* Çift dokunmayı algılayıp engelle (375–400 ms penceresi) */
+let _lastTouchEnd = 0;
+_gw.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - _lastTouchEnd <= 400) {
+    e.preventDefault();
+  }
+  _lastTouchEnd = now;
+}, { passive: false });
+
+/* Oyun alanında parmakla sürüklerken sayfa kaymasın / zoom olmasın */
+_gw.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+}, { passive: false });
+
 
     <div id="socialTag" aria-label="social handles">
         discord: <span style="font-weight:700">tablemagicio</span>
