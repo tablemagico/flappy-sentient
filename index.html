@@ -4,13 +4,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Flapy Lamumu – Cowppy Bird</title>
+    <title>Flapy Sentient </title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap" rel="stylesheet" />
     <style>
         :root {
-            /* Lamumu palette */
+            /* Sentient palette */
             --lamu-blue: #2D6BFF;
             --lamu-red: #FF3B59;
             --lamu-pink: #FF66CC;
@@ -456,7 +456,7 @@
     <!-- Start (full-screen) -->
     <div id="start" class="overlay" role="dialog" aria-modal="true">
         <div class="card">
-            <h1 class="title">Flapy Lamumu 🐄</h1>
+            <h1 class="title">Flapy Sentient 🐄</h1>
             <p class="muted">Enter your X (Twitter) handle to start. We’ll fetch your avatar.</p>
             <div class="row">
                 <input id="inputHandle" type="text" placeholder="e.g., lamumu_io" autocomplete="off" />
@@ -670,7 +670,7 @@
             const d = state.dpr, W = state.W, H = state.H;
             ctx.clearRect(0, 0, W, H);
 
-            // bright sky with Lamumu tones
+            // bright sky with Sentient tones
             const g = ctx.createLinearGradient(0, 0, 0, H);
             g.addColorStop(0, '#0f2242'); g.addColorStop(1, '#0b1423');
             ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -842,7 +842,7 @@
             const W = 960, H = 540; // horizontal card
             const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
 
-            // background with Lamumu tones
+            // background with Sentient tones
             const bg1 = g.createLinearGradient(0, 0, 0, H);
             bg1.addColorStop(0, '#0b0e12'); bg1.addColorStop(1, '#0e141a');
             g.fillStyle = bg1; g.fillRect(0, 0, W, H);
@@ -929,7 +929,7 @@
 
         /* ================ SHARE (X) ================ */
         document.getElementById('tweetBtn').addEventListener('click', () => {
-            const text = encodeURIComponent(`I played Flapy Lamumu! Score: ${state.score} ${state.handle}\n#Lamumu #Flapy`);
+            const text = encodeURIComponent(`I played Flapy Sentient! Score: ${state.score} ${state.handle}\n#Sentient #Flapy`);
             const url = 'https://twitter.com/intent/tweet?text=' + text;
             window.open(url, '_blank');
         });
